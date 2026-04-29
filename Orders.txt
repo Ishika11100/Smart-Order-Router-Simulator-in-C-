@@ -1,0 +1,8 @@
+# Smart Order Router – Sample Orders
+# Format: OrderID, Symbol, Side, Quantity, MarketPrice
+# Lines beginning with '#' are ignored.
+1,AAPL,BUY,500,100.00
+2,MSFT,BUY,300,250.00
+3,TSLA,SELL,200,180.00
+4,AMZN,BUY,1000,175.00
+5,GOOGL,SELL,150,155.00
