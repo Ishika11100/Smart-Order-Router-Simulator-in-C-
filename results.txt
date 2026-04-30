@@ -1,0 +1,50 @@
+SMART ORDER ROUTER SIMULATOR v4 – RESULTS
+(Live Market Data + Order Splitting)
+======================================================================
+
+--- Live Market Data Used ---
+  TSLA  price=$381.6300  bid=$0.0000  ask=$0.0000  spread=$0.0000  daily_vol=0.0275  annual_vol=43.6792%  ADV=67864070
+  MSFT  price=$407.7800  bid=$0.0000  ask=$0.0000  spread=$0.0000  daily_vol=0.0214  annual_vol=33.9919%  ADV=34337603
+  AMZN  price=$265.0600  bid=$0.0000  ask=$0.0000  spread=$0.0000  daily_vol=0.0174  annual_vol=27.6572%  ADV=48905372
+  GOOGL  price=$384.8000  bid=$0.0000  ask=$0.0000  spread=$0.0000  daily_vol=0.0241  annual_vol=38.1791%  ADV=26331372
+  AAPL  price=$271.3500  bid=$0.0000  ask=$0.0000  spread=$0.0000  daily_vol=0.0151  annual_vol=24.0268%  ADV=42972297
+
+--- Order Execution Log (Smart Router) ---
+
+order 1 AAPL BUY qty=500 ref=$100.0000
+  venue=IEX exec=$271.3690 spread=$0.0050 slip=$0.0140 exchfee=$0.0009 regfee=$0.0002 total=$10.0546
+
+order 2 MSFT BUY qty=300 ref=$250.0000
+  venue=IEX exec=$407.8108 spread=$0.0050 slip=$0.0258 exchfee=$0.0009 regfee=$0.0002 total=$9.5728
+
+order 3 TSLA SELL qty=200 ref=$180.0000
+  venue=IEX exec=$381.6070 spread=$0.0050 slip=$0.0180 exchfee=$0.0009 regfee=$0.0110 total=$6.9760
+
+order 4 AMZN BUY qty=1000 ref=$175.0000
+  venue=IEX exec=$265.0859 spread=$0.0050 slip=$0.0209 exchfee=$0.0009 regfee=$0.0002 total=$26.9821
+
+order 5 GOOGL SELL qty=150 ref=$155.0000
+  venue=IEX exec=$384.7729 spread=$0.0050 slip=$0.0221 exchfee=$0.0009 regfee=$0.0110 total=$5.8546
+
+=== Performance Report: Smart Router (with splitting) ===
+  Orders Executed         : 5
+  Avg Execution Price     : $342.1291
+  Total Transaction Fees  : $1.9350
+  Total Slippage Cost     : $42.5482
+  Fill Rate               : 100.00%
+  Implementation Short.   : $59.4401
+  Total Execution Cost    : $59.4401
+
+=== Performance Report: Baseline (always NYSE, no splitting) ===
+  Orders Executed         : 5
+  Avg Execution Price     : $172.0075
+  Total Transaction Fees  : $6.4500
+  Total Slippage Cost     : $24.1504
+  Fill Rate               : 100.00%
+  Implementation Short.   : $75.7280
+  Total Execution Cost    : $75.7280
+
+=== Strategy Comparison ===
+  Smart Router Total Cost   : $59.440138
+  Baseline Total Cost       : $75.727995
+  Savings via Smart Routing : $16.287857  (21.51%)

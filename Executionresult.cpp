@@ -40,39 +40,30 @@ int         ExecutionResult::getQuantityFilled()         const { return quantity
 bool        ExecutionResult::isValid()                   const { return !venueName.empty();     }
 
 void ExecutionResult::printSummary(const Order& order) const {
-    if (!isValid()) { std::cout << "  No venue selected.\n"; return; }
-
-    std::cout << std::fixed << std::setprecision(6);
-    std::cout << "  Venue            : " << venueName                   << "\n";
-    std::cout << "  Exec Price       : $" << executionPrice             << "\n";
-    std::cout << "  ── Cost Breakdown (per share) ──────────────────\n";
-    std::cout << "  Half-Spread      : $" << halfSpreadCostPerShare     << "\n";
-    std::cout << "  Slippage (sqrt)  : $" << slippagePerShare           << "\n";
-    std::cout << "  Exchange Fee     : $" << exchangeFeePerShare        << "\n";
-    std::cout << "  Regulatory Fees  : $" << regulatoryFeePerShare
-              << "  (SEC31 + FINRA TAF + DTCC)\n";
-    std::cout << "  ────────────────────────────────────────────────\n";
-    std::cout << std::setprecision(6);
-    std::cout << "  Total Cost/sh    : $" << totalCostPerShare          << "\n";
-    std::cout << "  Total Cost       : $" << totalCostForOrder          << "\n";
-    std::cout << "  Qty Filled       :  " << quantityFilled             << "\n";
+    if (!isValid()) { std::cout << "  no venue selected\n"; return; }
+    std::cout << std::fixed << std::setprecision(4);
+    std::cout << "  venue=" << venueName
+              << "  exec=$" << executionPrice
+              << "  spread=$" << halfSpreadCostPerShare
+              << "  slip=$" << slippagePerShare
+              << "  fee=$" << exchangeFeePerShare
+              << "  reg=$" << regulatoryFeePerShare
+              << "  total=$" << totalCostForOrder << "\n";
     (void)order;
 }
 
 void ExecutionResult::writeToStream(std::ostream& out, const Order& order) const {
-    out << std::fixed << std::setprecision(6);
-    out << "Order #" << order.getOrderId()
-        << " | " << order.getOrderType()
-        << " | " << order.getSymbol()
-        << " | " << order.getSide()
-        << " | Qty: " << order.getQuantity()
-        << " | Ref: $" << order.getMarketPrice() << "\n";
-    out << "  Venue: "         << venueName
-        << " | Exec: $"       << executionPrice
-        << " | Spread/sh: $"  << halfSpreadCostPerShare
-        << " | Slippage/sh: $"<< slippagePerShare
-        << " | ExchFee/sh: $" << exchangeFeePerShare
-        << " | RegFee/sh: $"  << regulatoryFeePerShare
-        << " | Total/sh: $"   << totalCostPerShare
-        << " | Total: $"      << totalCostForOrder << "\n\n";
+    out << std::fixed << std::setprecision(4);
+    out << "order " << order.getOrderId()
+        << " " << order.getSymbol()
+        << " " << order.getSide()
+        << " qty=" << order.getQuantity()
+        << " ref=$" << order.getMarketPrice() << "\n";
+    out << "  venue=" << venueName
+        << " exec=$" << executionPrice
+        << " spread=$" << halfSpreadCostPerShare
+        << " slip=$" << slippagePerShare
+        << " exchfee=$" << exchangeFeePerShare
+        << " regfee=$" << regulatoryFeePerShare
+        << " total=$" << totalCostForOrder << "\n\n";
 }

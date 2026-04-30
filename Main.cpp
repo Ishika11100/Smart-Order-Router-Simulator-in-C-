@@ -106,13 +106,6 @@ buildLiveMarketDataMap(const std::vector<std::shared_ptr<Order>>& orders) {
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
-static void printBanner(const std::string& text) {
-    const int W = 96;
-    std::cout << "\n" << std::string(W, '=') << "\n";
-    int pad = (W - static_cast<int>(text.size())) / 2;
-    if (pad > 0) std::cout << std::string(pad, ' ');
-    std::cout << text << "\n" << std::string(W, '=') << "\n";
-}
 
 // ── Simulate executing one VenueSlice and return its ExecutionResult ──────────
 // Used when the splitter has already decided how much goes to each venue.
@@ -188,7 +181,7 @@ int main() {
     Portfolio baselinePortfolio("Baseline (always NYSE, no splitting)");
 
     // ── 5. Route every order ──────────────────────────────────────────────────
-    printBanner("SMART ORDER ROUTER SIMULATOR  v4  (Live Data + Order Splitting)");
+    std::cout << "\nSMART ORDER ROUTER SIMULATOR v4\n";
 
     for (const auto& orderPtr : orders) {
         const std::string& sym = orderPtr->getSymbol();
@@ -199,23 +192,23 @@ int main() {
                           ? md.livePrice : orderPtr->getMarketPrice();
 
         std::cout << "\n";
-        orderPtr->describe();
 
-        if (md.livePrice > 0.0)
-            std::cout << "  Live price override: $" << refPrice
-                      << "  (was $" << orderPtr->getMarketPrice() << " in orders.txt)\n";
-
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "order " << orderPtr->getOrderId()
+                  << "  " << orderPtr->getSymbol()
+                  << "  " << orderPtr->getSide()
+                  << "  qty=" << orderPtr->getQuantity()
+                  << "  live_price=$" << refPrice;
         if (md.liveSpread() > 0.0)
-            std::cout << "  Live NBBO: bid $" << md.liveBid
-                      << " / ask $" << md.liveAsk
-                      << "  spread $" << md.liveSpread() << "\n";
+            std::cout << "  bid=$" << md.liveBid << "  ask=$" << md.liveAsk;
+        std::cout << "\n";
 
         // ── Splitting analysis ────────────────────────────────────────────────
         SplitPlan plan = OrderSplitter::split(*orderPtr, venueList, md);
         OrderSplitter::printPlan(plan, *orderPtr, md);
 
         // ── Smart routing (with splitting) ────────────────────────────────────
-        std::cout << "\n  [SMART ROUTE]\n";
+        std::cout << "  smart_route:\n";
         double smartTotalCost = 0.0;
 
         for (const auto& slice : plan.slices) {
@@ -235,7 +228,7 @@ int main() {
             std::cout << "  [SPLIT TOTAL COST]: $" << smartTotalCost << "\n";
 
         // ── Baseline routing (always NYSE, whole order) ───────────────────────
-        std::cout << "\n  [BASELINE ROUTE] -> NYSE (no split)\n";
+        std::cout << "  baseline_route (NYSE):\n";
         try {
             ExecutionResult br = router.routeOrderBaseline(*orderPtr, md);
             br.printSummary(*orderPtr);
@@ -244,7 +237,7 @@ int main() {
             std::cerr << "  [ERROR] Baseline routing: " << e.what() << "\n";
         }
 
-        std::cout << "  " << std::string(94, '-') << "\n";
+        std::cout << "\n";
     }
 
     // ── 6. Performance reports ─────────────────────────────────────────────────

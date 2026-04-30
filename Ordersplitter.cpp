@@ -182,46 +182,22 @@ SplitPlan OrderSplitter::split(const Order& order,
 void OrderSplitter::printPlan(const SplitPlan& plan, const Order& order,
                                const MarketData& md) {
     double pr = participationRate(order, md) * 100.0;
-    double price = (md.livePrice > 0.0) ? md.livePrice : order.getMarketPrice();
-
     std::cout << std::fixed << std::setprecision(4);
-    std::cout << "\n  ── Order Splitting Analysis ─────────────────────────────────────\n";
-    std::cout << "  Participation rate : " << pr << "% of ADV"
-              << "  (threshold: " << (SPLIT_THRESHOLD * 100.0) << "%)\n";
+    std::cout << "  participation=" << pr << "% of ADV"
+              << "  threshold=" << (SPLIT_THRESHOLD * 100.0) << "%\n";
 
     if (!plan.wasSplit) {
-        std::cout << "  Decision           : SINGLE VENUE (order is small, no split needed)\n";
-        std::cout << "  Venue              : " << plan.slices[0].venueName
-                  << "  (" << plan.slices[0].quantity << " shares)\n";
+        std::cout << "  decision=single  venue=" << plan.slices[0].venueName
+                  << "  qty=" << plan.slices[0].quantity << "\n";
         return;
     }
 
-    std::cout << "  Decision           : SPLIT across " << plan.slices.size()
-              << " venue(s)\n";
-    std::cout << "  Estimated savings  : $" << plan.estimatedSavings
-              << " vs sending all to cheapest single venue\n";
-
-    // Live spread line
-    if (md.liveSpread() > 0.0) {
-        std::cout << "  Live NBBO spread   : $" << md.liveSpread()
-                  << "  (bid $" << md.liveBid << " / ask $" << md.liveAsk << ")\n";
-    }
-    std::cout << "  Live price used    : $" << price << "\n";
-
-    std::cout << "\n  " << std::left
-              << std::setw(10) << "Venue"
-              << std::setw(12) << "Qty"
-              << std::setw(16) << "Participation"
-              << std::setw(12) << "% of total" << "\n";
-    std::cout << "  " << std::string(50, '-') << "\n";
-
+    std::cout << "  decision=split  venues=" << plan.slices.size()
+              << "  est_savings=$" << plan.estimatedSavings << "\n";
     for (const auto& s : plan.slices) {
         double pct = (static_cast<double>(s.quantity) / order.getQuantity()) * 100.0;
-        std::cout << "  " << std::left
-                  << std::setw(10) << s.venueName
-                  << std::setw(12) << s.quantity
-                  << std::setw(16) << (s.participationRate * 100.0)
-                  << std::setw(12) << pct << "%\n";
+        std::cout << "    " << s.venueName
+                  << "  qty=" << s.quantity
+                  << "  (" << pct << "%)\n";
     }
-    std::cout << "  " << std::string(50, '-') << "\n";
 }
