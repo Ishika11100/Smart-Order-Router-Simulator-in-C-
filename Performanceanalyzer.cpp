@@ -1,4 +1,4 @@
-#include "Performanceanalyzer.h"
+#include "PerformanceAnalyzer.h"
 #include <iostream>
 #include <iomanip>
 
