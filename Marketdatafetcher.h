@@ -4,41 +4,33 @@
 #include "MarketData.h"
 #include <string>
 
-// MarketDataFetcher: fetches all real market data needed by the SOR.
+// fetches real market data from Yahoo Finance at program startup.
+// makes two HTTP requests per symbol using libcurl:
 //
-// Two separate HTTP requests per symbol:
+//   call 1 -- 40 days of daily OHLCV (historical)
+//     computes 20-day realized volatility from log close-to-close returns
+//     computes 20-day average daily volume
 //
-//   1. Historical (Yahoo v8 chart, range=40d, interval=1d)
-//      → computes 20-day realised daily volatility from log close returns
-//      → computes 20-day ADV from actual traded volume
+//   call 2 -- 1-minute bars for today (live quote)
+//     extracts current price, bid, ask, bidSize, askSize
+//     outside market hours Yahoo stops sending bid/ask so those stay 0.0
 //
-//   2. Live quote (Yahoo v8 chart, range=1d, interval=1m — most recent bar)
-//      → livePrice : last trade / regular market price
-//      → liveBid   : current NBBO best bid
-//      → liveAsk   : current NBBO best ask
-//      → bidSize / askSize : depth at best bid/ask in round lots (×100 shares)
+// both results get merged into one MarketData struct and returned.
 //
-// The two calls are merged into one MarketData struct and returned together.
-//
-// Dependencies (MSYS2 MinGW64):
+// dependencies (install once via MSYS2):
 //   pacman -S mingw-w64-x86_64-curl
 //   pacman -S mingw-w64-x86_64-nlohmann-json
 
 class MarketDataFetcher {
 public:
-    // Fetches complete MarketData (historical + live quote) for one symbol.
-    // Throws std::runtime_error on network failure, bad symbol, or parse error.
+    // main entry point -- call this once per symbol at startup
+    // throws std::runtime_error if network completely fails (caller catches it)
     static MarketData fetch(const std::string& symbol);
 
 private:
-    // Step 1: fetch 40 days of daily OHLCV → compute vol + ADV
-    static void fetchHistorical(MarketData& md);
-
-    // Step 2: fetch live quote → fill livePrice, liveBid, liveAsk, sizes
-    static void fetchLiveQuote(MarketData& md);
-
-    // Shared libcurl helper: performs one HTTPS GET, returns response body
-    static std::string httpGet(const std::string& url);
+    static void fetchHistorical(MarketData& md);  // fills vol + adv
+    static void fetchLiveQuote(MarketData& md);   // fills price, bid, ask
+    static std::string httpGet(const std::string& url); // shared curl helper
 };
 
 #endif

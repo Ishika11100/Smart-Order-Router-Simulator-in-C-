@@ -3,6 +3,7 @@
 Portfolio::Portfolio(const std::string& name) : strategyName(name) {}
 
 void Portfolio::addRoutedOrder(std::shared_ptr<Order> order, const ExecutionResult& result) {
+    // {order, result} creates a RoutedOrder struct inline, cleaner than writing it out
     history.push_back({order, result});
 }
 

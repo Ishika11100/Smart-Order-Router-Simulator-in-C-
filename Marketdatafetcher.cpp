@@ -179,7 +179,7 @@ void MarketDataFetcher::fetchLiveQuote(MarketData& md) {
     }
 }
 
-// ── Public entry point ────────────────────────────────────────────────────────
+//  Public entry point 
 
 MarketData MarketDataFetcher::fetch(const std::string& symbol) {
     MarketData md;

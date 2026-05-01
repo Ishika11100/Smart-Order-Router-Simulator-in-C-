@@ -8,23 +8,21 @@
 #include "ExecutionResult.h"
 #include "MarketData.h"
 
-// SmartOrderRouter: evaluates all registered venues for a given order and
-// routes to the one with the lowest TOTAL cost per share.
+// this is the brain of the whole project.
+// it holds all 4 venues and for each order it:
+//   1. evaluates the full cost at every venue (spread + slippage + fees + regulatory)
+//   2. returns the cheapest one (routeOrder)
+//   3. also runs the always-NYSE baseline separately so we can compare (routeOrderBaseline)
 //
-// "Total cost" now includes ALL four components:
-//   1. Half bid-ask spread  (venue-specific)
-//   2. Market impact        (Almgren-Chriss sqrt, symbol + venue specific)
-//   3. Exchange fee         (venue-specific, taker rate)
-//   4. Regulatory fees      (mandatory, computed from exec price + side)
-//
-// Market data (volatility, ADV) is passed per-order, not stored in the router,
-// because in production these values update continuously throughout the day.
+// MarketData gets passed in per-order (not stored in the router) because
+// vol and ADV update throughout the trading day in real life
 
 class SmartOrderRouter {
 private:
     std::vector<Venue> venues;
 
-    // Builds a full ExecutionResult for one (venue, order, market data) triple
+    // internal helper -- builds a full ExecutionResult for one venue/order pair
+    // called once per venue inside routeOrder's loop
     ExecutionResult evaluateVenue(const Venue& v,
                                   const Order& order,
                                   const MarketData& md) const;
@@ -33,13 +31,13 @@ public:
     void addVenue(const Venue& venue);
     const std::vector<Venue>& getVenues() const;
 
-    // Side-by-side cost breakdown table across all venues for one order
+    // prints a side-by-side cost table for all venues (nice for seeing why IEX wins)
     void printVenueComparison(const Order& order, const MarketData& md) const;
 
-    // Smart strategy: picks the venue with the minimum total cost per share
+    // smart strategy: loops all venues, returns the one with lowest total cost/share
     ExecutionResult routeOrder(const Order& order, const MarketData& md) const;
 
-    // Baseline strategy: always routes to the first registered venue
+    // dumb baseline: always sends to venues[0] which is NYSE -- used for comparison
     ExecutionResult routeOrderBaseline(const Order& order, const MarketData& md) const;
 };
 

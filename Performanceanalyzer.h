@@ -4,13 +4,18 @@
 #include <ostream>
 #include "Portfolio.h"
 
-// PerformanceAnalyzer: computes and reports execution quality metrics for
-// a completed portfolio.  Metrics reported:
-//   - Average execution price
-//   - Total transaction fees
-//   - Total slippage cost
-//   - Fill rate  (simplified: 100% since we do not model partial fills)
-//   - Implementation shortfall  (total friction cost above market reference)
+// reads a completed portfolio and computes the TCA (transaction cost analysis) metrics.
+// we pass the portfolio in by const reference -- the analyzer just reads it,
+// doesnt own it or copy it. thats why explicit is on the constructor (prevents
+// the compiler from accidentally converting a Portfolio into an Analyzer).
+//
+// metrics we compute:
+//   average execution price   -- how close did we get to the market price
+//   total transaction fees    -- exchange fees only
+//   total slippage cost       -- market impact across all orders
+//   fill rate                 -- 100% here since we dont model partial fills
+//   implementation shortfall  -- total friction cost above reference price
+
 class PerformanceAnalyzer {
 private:
     const Portfolio& portfolio;
@@ -24,8 +29,8 @@ public:
     double getFillRate()                const;
     double getImplementationShortfall() const;
 
-    void printReport()                       const;
-    void writeReport(std::ostream& out)      const;
+    void printReport()              const; // prints to terminal
+    void writeReport(std::ostream& out) const; // writes to file
 };
 
 #endif

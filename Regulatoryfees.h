@@ -2,67 +2,54 @@
 #define REGULATORYFEES_H
 
 #include <string>
-#include <algorithm>  // std::min
+#include <algorithm>
 
-// RegulatoryFees: mandatory US equity market fees.
+// mandatory US equity market fees -- you cant avoid these no matter which
+// exchange you use. every single US equity trade pays them.
 //
-// These are NOT optional. Every US equity trade incurs these charges
-// regardless of which broker or exchange you use. A real SOR must
-// include them in total cost or the TCA numbers are wrong.
+// three components:
 //
-// Three components:
+//   SEC Section 31  (sell side only)
+//     rate * execution price per share. funds SEC operations.
+//     rate changes annually -- using 2024 rate of $0.0000278 per dollar of proceeds.
 //
-//  1. SEC Section 31 Transaction Fee
-//     - Charged on SELL side only
-//     - Calculated as: rate × (execution price × quantity) / quantity
-//       = rate × execution price per share
-//     - Rate: $0.0000278 per dollar of sale proceeds (2024 rate)
-//     - Paid by broker to the SEC to fund market regulation
+//   FINRA TAF  (sell side only)
+//     $0.000145 per share, but capped at $7.27 per trade.
+//     the cap matters for large orders -- once you hit 50,000 shares
+//     the per-share cost starts shrinking. funds FINRA oversight.
 //
-//  2. FINRA Trading Activity Fee (TAF)
-//     - Charged on SELL side only
-//     - Flat rate: $0.000145 per share, capped at $7.27 per trade
-//     - The cap matters: for large orders the per-share cost shrinks
-//     - Paid to FINRA to fund broker-dealer oversight
+//   DTCC clearing  (both buy and sell)
+//     ~$0.0002 per share flat. funds settlement infrastructure.
 //
-//  3. DTCC / NSCC Clearing Fee
-//     - Charged on BOTH sides (buy and sell)
-//     - ~$0.0002 per share (approximate; actual DTCC schedule is tiered)
-//     - Paid to the Depository Trust & Clearing Corp. for settlement
-//
-// References:
-//   SEC:   https://www.sec.gov/info/edgar/siccodes.htm (Section 31 rates updated annually)
-//   FINRA: https://www.finra.org/filing-reporting/taf
-//   DTCC:  https://www.dtcc.com/clearing-services/equities-clearing-services
+// we made all methods static because theres no state to store,
+// its just math. call them directly: RegulatoryFees::totalPerShare(...)
 
 class RegulatoryFees {
 public:
-    // ── Rate constants ────────────────────────────────────────────────────────
-    static constexpr double SEC31_RATE       = 0.0000278;  // $/$ of proceeds
-    static constexpr double FINRA_TAF_RATE   = 0.000145;   // $/share
-    static constexpr double FINRA_TAF_CAP    = 7.27;       // $/trade
-    static constexpr double DTCC_RATE        = 0.0002;     // $/share (both sides)
+    static constexpr double SEC31_RATE     = 0.0000278;
+    static constexpr double FINRA_TAF_RATE = 0.000145;
+    static constexpr double FINRA_TAF_CAP  = 7.27;
+    static constexpr double DTCC_RATE      = 0.0002;
 
-    // SEC Section 31 — sell side only, proportional to execution price
+    // SEC31 -- sell only, scales with execution price
     static double sec31PerShare(double execPrice, const std::string& side) {
         if (side != "SELL") return 0.0;
         return execPrice * SEC31_RATE;
     }
 
-    // FINRA TAF — sell side only, flat per-share rate with trade-level cap
-    // The cap is per-trade, so per-share cost = min(rate, cap/qty)
+    // FINRA TAF -- sell only, flat rate with a per-trade cap
     static double finraTafPerShare(int qty, const std::string& side) {
         if (side != "SELL") return 0.0;
-        double totalTaf = std::min(FINRA_TAF_RATE * static_cast<double>(qty), FINRA_TAF_CAP);
-        return totalTaf / static_cast<double>(qty);
+        double total = std::min(FINRA_TAF_RATE * static_cast<double>(qty), FINRA_TAF_CAP);
+        return total / static_cast<double>(qty);
     }
 
-    // DTCC clearing — both sides, flat rate per share
+    // DTCC -- both sides, flat rate
     static double dtccPerShare() {
         return DTCC_RATE;
     }
 
-    // Aggregate: total mandatory regulatory cost per share for one trade
+    // combined total of all three
     static double totalPerShare(double execPrice, int qty, const std::string& side) {
         return sec31PerShare(execPrice, side)
              + finraTafPerShare(qty, side)

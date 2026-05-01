@@ -6,7 +6,7 @@ PerformanceAnalyzer::PerformanceAnalyzer(const Portfolio& p) : portfolio(p) {}
 
 double PerformanceAnalyzer::getAverageExecutionPrice() const {
     const auto& h = portfolio.getHistory();
-    if (h.empty()) return 0.0;
+    if (h.empty()) return 0.0; // guard against division by zero
     double sum = 0.0;
     for (const auto& ro : h) sum += ro.result.getExecutionPrice();
     return sum / static_cast<double>(h.size());
@@ -15,6 +15,7 @@ double PerformanceAnalyzer::getAverageExecutionPrice() const {
 double PerformanceAnalyzer::getTotalFees() const {
     double total = 0.0;
     for (const auto& ro : portfolio.getHistory())
+        // fee per share * shares = total fee for that order
         total += ro.result.getFeePerShare() * static_cast<double>(ro.order->getQuantity());
     return total;
 }
@@ -26,19 +27,19 @@ double PerformanceAnalyzer::getTotalSlippage() const {
     return total;
 }
 
-// Simplified: all market orders assumed fully filled (no partial fill model).
+// simplified -- we assume all market orders fill 100%.
+// a real system would track partial fills but thats out of scope here.
 double PerformanceAnalyzer::getFillRate() const {
     return 100.0;
 }
 
-// Implementation shortfall = total cost above the reference market price
-// across all orders in this portfolio.
+// implementation shortfall = total cost above reference price.
+// simplified to just total execution cost for this project.
 double PerformanceAnalyzer::getImplementationShortfall() const {
     return portfolio.getTotalCost();
 }
 
-// ── Reporting helpers ─────────────────────────────────────────────────────────
-
+// shared helper used by both printReport and writeReport
 static void writeMetrics(std::ostream& out, const std::string& label,
                           size_t count, double avgExec, double fees,
                           double slippage, double fill, double is,

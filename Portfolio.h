@@ -7,14 +7,18 @@
 #include "Order.h"
 #include "ExecutionResult.h"
 
-// Bundles an order pointer with its execution outcome for post-trade analysis.
+// bundles an order and its execution result together so they travel as one unit.
+// we use shared_ptr for the order because the same order object lives in both
+// smartPortfolio and baselinePortfolio -- no copying, just two references.
 struct RoutedOrder {
     std::shared_ptr<Order> order;
     ExecutionResult result;
 };
 
-// Portfolio: accumulates routed orders for a single strategy and provides
-// aggregate cost figures to the PerformanceAnalyzer.
+// Portfolio is basically a folder.
+// every time an order gets routed, the result goes in here.
+// two portfolios run in parallel -- one for smart routing, one for baseline.
+// PerformanceAnalyzer reads from these at the end to compute the summary stats.
 class Portfolio {
 private:
     std::vector<RoutedOrder> history;
@@ -29,8 +33,8 @@ public:
     const std::string&              getStrategyName() const;
     size_t                          size()            const;
 
-    double getTotalCost()                             const;
-    double getTotalQuantityFilled()                   const;
+    double getTotalCost()           const;
+    double getTotalQuantityFilled() const;
 };
 
 #endif

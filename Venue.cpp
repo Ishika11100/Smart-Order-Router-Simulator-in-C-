@@ -9,40 +9,29 @@ double Venue::getMakerFee()      const { return makerFeePerShare; }
 double Venue::getTakerFee()      const { return takerFeePerShare; }
 
 double Venue::calculateHalfSpreadCost() const {
+    // you always lose half the spread when you cross the market.
+    // buy at ask = midprice + half spread. sell at bid = midprice - half spread.
     return spread / 2.0;
 }
 
-// Live-spread override: if the caller has a real NBBO spread from Yahoo,
-// use that instead of the hardcoded venue spread.
-// All US venues trade at the NBBO by regulation (SEC Rule 611), so the
-// live spread applies equally to all venues — fee is the differentiator.
 double Venue::calculateHalfSpreadCostLive(double liveSpread) const {
+    // if we have a real live spread from Yahoo, use that instead of the hardcoded one.
+    // outside market hours liveSpread comes in as 0.0 so we fall back to hardcoded.
     if (liveSpread > 0.0) return liveSpread / 2.0;
-    return spread / 2.0;   // fallback to hardcoded if no live data
+    return spread / 2.0;
 }
-
-// ── Almgren-Chriss Square-Root Market Impact ─────────────────────────────────
-//
-// Formula: impact = price × σ_daily × √(qty / ADV)
-//
-// Intuition:
-//   Your order size as a fraction of daily volume (qty/ADV) is called the
-//   "participation rate." A 500-share order in AAPL (ADV ~80M) is a
-//   participation rate of 0.000006 — trivially small, near-zero impact.
-//   A 500-share order in a stock with ADV 1,000 is a 50% participation rate —
-//   you are HALF the market, massive impact.
-//
-//   Multiplying by σ_daily captures the idea that impact is proportional to
-//   how much the stock naturally moves. In a quiet stock, your impact stands
-//   out less. In a volatile stock, your impact is amplified.
-//
-// Dimensional analysis:
-//   price [$/sh] × σ_daily [dimensionless] × √(qty/ADV) [dimensionless]
-//   = $/share  ✓
 
 double Venue::calculateSlippage(double price, int qty,
                                  double dailyVol, double adv) const {
-    if (adv <= 0.0) return 999999.0;  // degenerate venue — never pick this
+    // Almgren-Chriss square root market impact model:
+    //   impact = price * daily_volatility * sqrt(order_size / avg_daily_volume)
+    //
+    // the sqrt is key -- doubling order size only multiplies impact by ~1.41
+    // not by 2. thats what makes it more realistic than the linear version we had before.
+    //
+    // if adv is somehow zero or negative we return a huge penalty so this
+    // venue never gets picked
+    if (adv <= 0.0) return 999999.0;
     double participationRate = static_cast<double>(qty) / adv;
     return price * dailyVol * std::sqrt(participationRate);
 }
@@ -52,14 +41,16 @@ double Venue::calculateExecutionPrice(double marketPrice, int qty,
                                        double dailyVol, double adv) const {
     double halfSpread = calculateHalfSpreadCost();
     double slippage   = calculateSlippage(marketPrice, qty, dailyVol, adv);
-    // BUY:  you pay above midprice (market moves against you going up)
-    // SELL: you receive below midprice (market moves against you going down)
+    // buying: price goes up (market moves against you)
+    // selling: price goes down (also moves against you)
     if (side == "SELL") return marketPrice - halfSpread - slippage;
     return marketPrice + halfSpread + slippage;
 }
 
 double Venue::calculateTotalExchangeCostPerShare(double price, int qty,
                                                   double dailyVol, double adv) const {
+    // this is just the exchange side -- regulatory fees get added on top of this
+    // in SmartOrderRouter. kept them separate so we can report them individually.
     return calculateHalfSpreadCost()
          + calculateSlippage(price, qty, dailyVol, adv)
          + takerFeePerShare;
