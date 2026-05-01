@@ -35,16 +35,16 @@ ExecutionResult::ExecutionResult(const std::string& venue, double execPrice,
 
 // getters data is private so these are the only way to read it from outside
 // const used ot avoid functions accidentally change anything
-std::string ExecutionResult::getVenueName()              const { return venueName;              }
+std::string ExecutionResult::getVenueName()              const { return venueName;   }
 double      ExecutionResult::getExecutionPrice()         const { return executionPrice;         }
 double      ExecutionResult::getHalfSpreadCostPerShare() const { return halfSpreadCostPerShare; }
-double      ExecutionResult::getSlippagePerShare()       const { return slippagePerShare;       }
-double      ExecutionResult::getExchangeFeePerShare()    const { return exchangeFeePerShare;    }
+double      ExecutionResult::getSlippagePerShare()       const { return slippagePerShare;    }
+double      ExecutionResult::getExchangeFeePerShare()    const { return exchangeFeePerShare;  }
 double      ExecutionResult::getRegulatoryFeePerShare()  const { return regulatoryFeePerShare;  }
-double      ExecutionResult::getFeePerShare()            const { return exchangeFeePerShare;    } // alias -- old code used this name
-double      ExecutionResult::getTotalCostPerShare()      const { return totalCostPerShare;      }
-double      ExecutionResult::getTotalCostForOrder()      const { return totalCostForOrder;      }
-int         ExecutionResult::getQuantityFilled()         const { return quantityFilled;         }
+double      ExecutionResult::getFeePerShare()            const { return exchangeFeePerShare;  } // alias -- old code used this name
+double      ExecutionResult::getTotalCostPerShare()      const { return totalCostPerShare;   }
+double      ExecutionResult::getTotalCostForOrder()      const { return totalCostForOrder;  }
+int         ExecutionResult::getQuantityFilled()         const { return quantityFilled;     }
 
 // if venueName is empty it means this is the dummy sentinel, not a real result
 bool ExecutionResult::isValid() const { return !venueName.empty(); }
